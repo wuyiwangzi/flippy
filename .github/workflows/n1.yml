@@ -227,7 +227,7 @@ jobs:
         OPENWRT_ARMVIRT: openwrt/bin/targets/*/*/*rootfs.tar.gz
         PACKAGE_SOC: s905d_qemu
         WHOAMI: wuyiwangzi
-        KERNEL_VERSION_NAME: 6.6.y
+        KERNEL_VERSION_NAME: 6.12.y
         KERNEL_AUTO_LATEST: true
         #OPENWRT_VER: R21.7.26
         ENABLE_WIFI_K504: 1
