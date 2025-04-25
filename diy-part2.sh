@@ -35,14 +35,6 @@ function merge_feed(){
 rm -rf package/custom; mkdir package/custom
 
 
-
-# BTF: fix failed to validate module
-# config/Config-kernel.in patch
-curl -s https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/patch/generic/0001-kernel-add-MODULE_ALLOW_BTF_MISMATCH-option.patch | patch -p1
-patch -p1 < $GITHUB_WORKSPACE/PATCH/add-xdp-diag.patch
-patch -p1 < $GITHUB_WORKSPACE/PATCH/libquadmath.patch
-#atch -p1 < $GITHUB_WORKSPACE/PATCH/lede_add_immotalwrt_download_method.patch
-
 # ARM64: Add CPU model name in proc cpuinfo
 #wget -P target/linux/generic/pending-5.4 https://github.com/immortalwrt/immortalwrt/raw/master/target/linux/generic/hack-5.4/312-arm64-cpuinfo-Add-model-name-in-proc-cpuinfo-for-64bit-ta.patch
 # autocore
@@ -77,23 +69,6 @@ sed -i 's#\\u@\\h:\\w\\\$#\\[\\e[32;1m\\][\\u@\\h\\[\\e[0m\\] \\[\\033[01;34m\\]
 mkdir -pv files/root
 curl -so files/root/.bash_profile https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/files/root/.bash_profile
 curl -so files/root/.bashrc https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/files/root/.bashrc
-
-# musl patch
-cp -fv $GITHUB_WORKSPACE/PATCH/001-elf.h-add-typedefs-for-Elf-_Relr.patch toolchain/musl/patches
-
-rm -rf feeds/packages/lang/python
-cp -rf $GITHUB_WORKSPACE/general/python feeds/packages/lang
-
-rm -rf  feeds/packages/net/uugamebooster
-cp -rf $GITHUB_WORKSPACE/general/uugamebooster feeds/packages/net
-
-rm -rf feeds/packages/utils/lrzsz
-cp -rf $GITHUB_WORKSPACE/general/lrzsz feeds/packages/utils
-
-rm -rf feeds/packages/net/wget
-cp -rf $GITHUB_WORKSPACE/general/wget feeds/packages/net/wget
-
-cp -rf $GITHUB_WORKSPACE/general/geoview feeds/packages/net
 
 # liburcu
 sed -i 's/PKG_VERSION:=.*/PKG_VERSION:=0.14.0/g' feeds/packages/libs/liburcu/Makefile
