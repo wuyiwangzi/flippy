@@ -70,15 +70,6 @@ mkdir -pv files/root
 curl -so files/root/.bash_profile https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/files/root/.bash_profile
 curl -so files/root/.bashrc https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/files/root/.bashrc
 
-# liburcu
-sed -i 's/PKG_VERSION:=.*/PKG_VERSION:=0.14.0/g' feeds/packages/libs/liburcu/Makefile
-sed -i 's/PKG_HASH:=.*/PKG_HASH:=ca43bf261d4d392cff20dfae440836603bf009fce24fdc9b2697d837a2239d4f/g' feeds/packages/libs/liburcu/Makefile
-
-# afalg_engine
-sed -i 's/PKG_VERSION:=.*/PKG_VERSION:=1.2.1/g' feeds/packages/libs/afalg_engine/Makefile
-sed -i 's/PKG_RELEASE:=.*/PKG_RELEASE:=1/g' feeds/packages/libs/afalg_engine/Makefile
-sed -i 's/PKG_HASH:=.*/PKG_HASH:=3f0f6ee9ea7a5ea9c668ec16f8c492aa024a82dca78d0fbe30fd256f9da95d65/g' feeds/packages/libs/afalg_engine/Makefile
-
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 
