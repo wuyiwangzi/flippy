@@ -61,6 +61,14 @@ jobs:
         echo -e  "硬盘数量：$(ls /dev/sd* | grep -v [1-9] | wc -l) \n"
         echo "硬盘详情："
         df -Th
+        echo "DATE=$(date "+%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@v1.0.0
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      env:
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
     - name: Package Armvirt as OpenWrt
       uses: ophub/flippy-openwrt-actions@main
