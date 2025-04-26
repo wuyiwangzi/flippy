@@ -63,7 +63,6 @@ jobs:
         df -Th
 
     - name: Package Armvirt as OpenWrt
-      if: steps.compile.outputs.status == 'success' && !cancelled()
       uses: ophub/flippy-openwrt-actions@main
       env:
         OPENWRT_ARMVIRT: https://github.com/wuyiwangzi/flippy/releases/download/armv8/openwrt-armvirt-64-generic-rootfs.tar.gz
