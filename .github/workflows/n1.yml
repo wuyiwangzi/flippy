@@ -73,7 +73,7 @@ jobs:
     - name: Package Armvirt as OpenWrt
       uses: ophub/flippy-openwrt-actions@main
       env:
-        OPENWRT_ARMVIRT: https://github.com/wuyiwangzi/flippy/releases/download/n1/openwrt-armvirt-64-generic-rootfs.tar.gz
+        OPENWRT_ARMVIRT: https://github.com/wuyiwangzi/flippy/releases/download/armv8/openwrt-armvirt-64-generic-rootfs.tar.gz
         PACKAGE_SOC: s905d
         WHOAMI: wuyiwangzi
         KERNEL_VERSION_NAME: 5.4.y
