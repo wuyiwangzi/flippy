@@ -11,7 +11,6 @@
 name: Build N1 OpenWrt
 
 on:
-  repository_dispatch:
   workflow_dispatch:
     inputs:
       ssh:
@@ -76,7 +75,7 @@ jobs:
         OPENWRT_ARMVIRT: https://github.com/wuyiwangzi/flippy/releases/download/armv8/openwrt-armvirt-64-generic-rootfs.tar.gz
         PACKAGE_SOC: s905d
         WHOAMI: wuyiwangzi
-        KERNEL_VERSION_NAME: 5.4.y
+        KERNEL_VERSION_NAME: 5.4.y_6.12.y
         KERNEL_AUTO_LATEST: true
         #OPENWRT_VER: R21.7.26
         ENABLE_WIFI_K504: 1
@@ -95,7 +94,6 @@ jobs:
       with:
         name: R${{ env.DATE }} for ${{ env.PRODUCT_NAME }}
         allowUpdates: true
-        replacesArtifacts: false
         tag: ${{ env.FILE_NAME }}
         commit: main
         token: ${{ secrets.RELEASES_TOKEN }}
