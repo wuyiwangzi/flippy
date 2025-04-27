@@ -62,9 +62,8 @@ fi
 sed -i 's/noinitrd/noinitrd intel_pstate=disable/g' target/linux/x86/image/grub-efi.cfg
 
 # bash
-if [ "$platform" = "x86_64" ]; then
 sed -i 's#ash#bash#g' package/base-files/files/etc/passwd
-fi
+sed -i 's#ash#bash#g' package/base-files/files/etc/shells
 sed -i 's#\\u@\\h:\\w\\\$#\\[\\e[32;1m\\][\\u@\\h\\[\\e[0m\\] \\[\\033[01;34m\\]\\W\\[\\033[00m\\]\\[\\e[32;1m\\]]\\[\\e[0m\\]\\\$#g' package/base-files/files/etc/profile
 mkdir -pv files/root
 curl -so files/root/.bash_profile https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/files/root/.bash_profile
