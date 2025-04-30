@@ -1,4 +1,4 @@
-# Support following package：
+# Support following packages
 
 * luci-app-accesscontrol
 * luci-app-amlogic
