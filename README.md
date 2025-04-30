@@ -1,6 +1,6 @@
 # Function description
 
-Auto build OpenWrt for Phicomm N1 and x86_64 modified from [breakingbadboy/OpenWrt](https://github.com/breakingbadboy/OpenWrt) ,fix the bug of igmp(used by udpxy) in kernels of flippy.
+Auto build OpenWrt for Phicomm N1 and x86_64 modified from [breakingbadboy/OpenWrt](https://github.com/breakingbadboy/OpenWrt), fix the bug of igmp(used by udpxy) in kernels of flippy.
 
 Include following packages
 
