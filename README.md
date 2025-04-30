@@ -1,18 +1,6 @@
 # Support following package：
 
 *luci-app-accesscontrol
-*luci-app-arpbind
-*luci-app-autoreboot
-*luci-app-ddns
-*luci-app-filetransfer
-*luci-app-nlbwmon
-*luci-app-ssr-plus
-*luci-app-turboacc
-*luci-app-upnp
-*luci-app-vlmcsd
-*luci-app-vsftpd
-*luci-app-wol
-*luci-app-accesscontrol
 *luci-app-amlogic
 *luci-app-arpbind
 *luci-app-autoreboot
@@ -25,25 +13,14 @@
 *luci-app-nlbwmon
 *luci-app-opkg
 *luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-passwall
-*luci-app-rclone
 *luci-app-rclone
 *luci-app-softethervpn
+*luci-app-ssr-plus
 *luci-app-turboacc
 *luci-app-udpxy
 *luci-app-upnp
 *luci-app-v2ray-server
 *luci-app-vlmcsd
+*luci-app-vsftpd
 *luci-app-wol
 *luci-app-zerotier
