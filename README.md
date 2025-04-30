@@ -1,3 +1,5 @@
+# Function description
+
 Auto build OpenWrt for Phicomm N1 and x86_64 modified from [breakingbadboy/OpenWrt|https://github.com/breakingbadboy/OpenWrt],fix the bug of igmp(used by udpxy) in kernels of flippy.
 
 Support following packages
@@ -26,3 +28,15 @@ Support following packages
 * luci-app-vsftpd
 * luci-app-wol
 * luci-app-zerotier
+
+## Links
+
+- [OpenWrt](https://github.com/openwrt/openwrt)
+- [coolsnowwolf/lede](https://github.com/coolsnowwolf/lede)
+- [breakingbadboy/OpenWrt](https://github.com/breakingbadboy/OpenWrt)
+- [unifreq/openwrt_packit](https://github.com/unifreq/openwrt_packit)
+- [ophub/flippy-openwrt-actions](https://github.com/ophub/flippy-openwrt-actions)
+
+## License
+
+This project is licensed under GPL-2.0.
