@@ -68,6 +68,8 @@ sed -i 's#\\u@\\h:\\w\\\$#\\[\\e[32;1m\\][\\u@\\h\\[\\e[0m\\] \\[\\033[01;34m\\]
 mkdir -pv files/root
 curl -so files/root/.bash_profile https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/files/root/.bash_profile
 curl -so files/root/.bashrc https://raw.githubusercontent.com/sbwml/r4s_build_script/master/openwrt/files/root/.bashrc
+sed -i 's/^eval/#eval/g' files/root/.bashrc
+
 
 ./scripts/feeds update -a
 ./scripts/feeds install -a
