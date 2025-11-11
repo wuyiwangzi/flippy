@@ -36,7 +36,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.event.repository.owner.id == github.event.sender.id || ! github.event.sender.id
 
     steps:
@@ -72,7 +72,7 @@ jobs:
     - name: Package Armvirt as OpenWrt
       uses: ophub/flippy-openwrt-actions@main
       env:
-        OPENWRT_ARMVIRT: https://github.com/wuyiwangzi/flippy/releases/download/armv8/openwrt-armvirt-64-generic-rootfs.tar.gz
+        OPENWRT_ARMVIRT: https://github.com/wuyiwangzi/flippy/releases/download/armv8/openwrt-armsr-armv8-generic-rootfs.tar.gz
         PACKAGE_SOC: s905d_r68s
         WHOAMI: wuyiwangzi
         KERNEL_REPO_URL: ophub/kernel
