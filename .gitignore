@@ -1,1 +1,4 @@
 .DS_Store
+lede/
+lede-arm/
+openwrt_packit/

@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKIT_REPO_URL="${PACKIT_REPO_URL:-https://github.com/unifreq/openwrt_packit}"
 PACKIT_REPO_BRANCH="${PACKIT_REPO_BRANCH:-master}"
-PACKIT_DIR="${PACKIT_DIR:-/home/well/openwrt_packit}"
+PACKIT_DIR="${PACKIT_DIR:-$SCRIPT_DIR/openwrt_packit}"
 KERNEL_STORE="${KERNEL_STORE:-$PACKIT_DIR/kernel}"
 OUTPUT_DIR="${OUTPUT_DIR:-$PACKIT_DIR/output}"
 OPENWRT_ARMSR="${OPENWRT_ARMSR:-}"
@@ -63,8 +63,8 @@ Options:
   --rootfs PATH        Path or URL to openwrt-armsr-armv8-generic-rootfs.tar.gz
   --kernel VER         Kernel version name, default: 6.6.y
   --kernel-auto-latest true|false  Auto query same-series latest kernel, default: true
-  --output-dir PATH    Final output directory, default: /home/well/openwrt_packit/output
-  --build-arm          Build arm rootfs first using build-arm-local.sh --init if missing
+  --output-dir PATH    Final output directory, default: ./openwrt_packit/output
+  --build-arm          Build arm rootfs first using build-arm-local.sh --force-init if missing
   -h, --help           Show this help
 EOF
 }
@@ -140,8 +140,8 @@ ensure_rootfs() {
   if [ -z "$OPENWRT_ARMSR" ]; then
     local candidate
     for candidate in \
-      /home/well/lede-arm/bin/targets/*/*/*rootfs.tar.gz \
-      /home/well/lede-arm/bin/targets/*/*/*.tar.gz; do
+      "$SCRIPT_DIR"/lede-arm/bin/targets/*/*/*rootfs.tar.gz \
+      "$SCRIPT_DIR"/lede-arm/bin/targets/*/*/*.tar.gz; do
       if [ -f "$candidate" ]; then
         OPENWRT_ARMSR="$candidate"
         break
@@ -150,8 +150,8 @@ ensure_rootfs() {
   fi
 
   if [ -z "$OPENWRT_ARMSR" ] && [ "$AUTO_BUILD_ARM" -eq 1 ]; then
-    log "No arm rootfs found, running build-arm-local.sh --init"
-    "$SCRIPT_DIR/build-arm-local.sh" --init
+    log "No arm rootfs found, running build-arm-local.sh --force-init"
+    "$SCRIPT_DIR/build-arm-local.sh" --force-init
     ensure_rootfs
     return
   fi

@@ -8,7 +8,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_NAME="armv8"
-OPENWRT_DIR="${OPENWRT_DIR:-/home/well/lede-arm}"
+OPENWRT_DIR="${OPENWRT_DIR:-$SCRIPT_DIR/lede-arm}"
 CONFIG_FILE="${CONFIG_FILE:-$SCRIPT_DIR/armv8/.config.arm}"
 SHOW_OUTPUTS_PATTERN="\\( -name '*rootfs*' -o -name '*.img*' -o -name '*.tar.gz' -o -name 'sha256sums' -o -name 'profiles.json' \\)"
 

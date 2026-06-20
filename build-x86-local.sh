@@ -6,7 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_NAME="x86_64"
-OPENWRT_DIR="${OPENWRT_DIR:-/home/well/lede}"
+OPENWRT_DIR="${OPENWRT_DIR:-$SCRIPT_DIR/lede}"
 CONFIG_FILE="${CONFIG_FILE:-$SCRIPT_DIR/x86/.config.x86}"
 SHOW_OUTPUTS_PATTERN="\\( -name '*x86-64*' -o -name 'sha256sums' -o -name 'profiles.json' \\)"
 
