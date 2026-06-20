@@ -14,8 +14,8 @@ JOBS="${JOBS:-$(nproc)}"
 DOWNLOAD_JOBS="${DOWNLOAD_JOBS:-8}"
 TZ="${TZ:-Asia/Shanghai}"
 GO_BOOTSTRAP_ROOT="${GO_BOOTSTRAP_ROOT:-}"
-INSTALL_DEPS=0
-INIT=0
+INSTALL_DEPS=1
+FORCE_INIT=0
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
 
@@ -33,8 +33,7 @@ usage() {
 Usage: $(basename "$0") [options]
 
 Options:
-  --init           Initialize source, feeds, config, DIY scripts, and downloads
-  --install-deps   Install Ubuntu/Debian build dependencies before building
+  --force-init     Force re-initialize source, feeds, config, DIY scripts, and downloads
   -h, --help       Show this help
 
 Environment overrides:
@@ -48,11 +47,8 @@ EOF
 parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
-      --init)
-        INIT=1
-        ;;
-      --install-deps)
-        INSTALL_DEPS=1
+      --force-init)
+        FORCE_INIT=1
         ;;
       -h|--help)
         usage
@@ -77,6 +73,40 @@ install_dependencies() {
     python3 python3-pyelftools python3-setuptools python3-setuptools-whl python3-distutils-extra \
     qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim \
     wget xmlto xxd zlib1g-dev golang-go
+}
+
+check_dependencies() {
+  local missing=0
+  local cmds=(git make gcc g++ gawk curl rsync unzip bzip2 wget python3 file patch diff find xargs grep gzip realpath stat tar)
+
+  for cmd in "${cmds[@]}"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+      printf 'Missing required command: %s\n' "$cmd" >&2
+      missing=1
+    fi
+  done
+
+  if ! printf '#include <ncurses.h>\nint main(void){return 0;}\n' | gcc -x c - -o /tmp/opencode/ncurses-check >/dev/null 2>&1; then
+    printf 'Missing required development header: ncurses.h\n' >&2
+    missing=1
+  else
+    rm -f /tmp/opencode/ncurses-check
+  fi
+
+  if ! python3 - <<'PY' >/dev/null 2>&1
+try:
+    from distutils import util
+except Exception:
+    from setuptools._distutils import util  # noqa: F401
+PY
+  then
+    printf 'Missing required Python distutils support\n' >&2
+    missing=1
+  fi
+
+  if [ "$missing" -ne 0 ]; then
+    die "Missing required build tools. Install packages first or check apt setup."
+  fi
 }
 
 detect_go_bootstrap() {
@@ -165,24 +195,31 @@ apply_local_config_fixes() {
   log "Applying local-only config fixes"
   cd "$OPENWRT_DIR"
 
-  detect_go_bootstrap
-  if [ -n "$GO_BOOTSTRAP_ROOT" ] && [ -x "$GO_BOOTSTRAP_ROOT/bin/go" ]; then
-    if grep -q '^CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=' .config; then
-      sed -i "s|^CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=.*|CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=\"$GO_BOOTSTRAP_ROOT\"|" .config
-    else
-      printf 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="%s"\n' "$GO_BOOTSTRAP_ROOT" >> .config
-    fi
-    log "Using external Go bootstrap: $GO_BOOTSTRAP_ROOT"
-  else
-    log "No external Go bootstrap found; golang/host may fail on arm64 hosts"
-  fi
+  case "$(uname -m)" in
+    arm64|aarch64)
+      detect_go_bootstrap
+      if [ -n "$GO_BOOTSTRAP_ROOT" ] && [ -x "$GO_BOOTSTRAP_ROOT/bin/go" ]; then
+        if grep -q '^CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=' .config; then
+          sed -i "s|^CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=.*|CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=\"$GO_BOOTSTRAP_ROOT\"|" .config
+        else
+          printf 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="%s"\n' "$GO_BOOTSTRAP_ROOT" >> .config
+        fi
+        log "Using external Go bootstrap: $GO_BOOTSTRAP_ROOT"
+      else
+        log "No external Go bootstrap found; golang/host may fail on arm64 hosts"
+      fi
 
-  # If staging_dir recorded a Homebrew Python without distutils, force OpenWrt to re-detect system Python.
-  if [ -L staging_dir/host/bin/python3 ]; then
-    case "$(readlink staging_dir/host/bin/python3)" in
-      *linuxbrew*|*homebrew*) rm -f staging_dir/host/bin/python3 ;;
-    esac
-  fi
+      # If staging_dir recorded a Homebrew Python without distutils, force OpenWrt to re-detect system Python.
+      if [ -L staging_dir/host/bin/python3 ]; then
+        case "$(readlink staging_dir/host/bin/python3)" in
+          *linuxbrew*|*homebrew*) rm -f staging_dir/host/bin/python3 ;;
+        esac
+      fi
+      ;;
+    *)
+      log "Skipping ARM-specific host fixes on non-ARM host"
+      ;;
+  esac
 }
 
 download_sources() {
@@ -225,13 +262,10 @@ run_local_build() {
   log "Workspace: $WORKDIR"
   log "Source: $OPENWRT_DIR"
 
-  if [ "$INSTALL_DEPS" -eq 1 ]; then
+  if [ "$FORCE_INIT" -eq 1 ] || [ ! -d "$OPENWRT_DIR" ] || [ ! -f "$OPENWRT_DIR/Makefile" ]; then
+    log "Initializing OpenWrt build environment"
     install_dependencies
-  else
-    log "Skipping dependency installation; use --install-deps if needed"
-  fi
-
-  if [ "$INIT" -eq 1 ]; then
+    check_dependencies
     clone_or_update_source
     reset_diy_touched_files
     load_custom_feeds
@@ -240,7 +274,7 @@ run_local_build() {
     apply_local_config_fixes
     download_sources
   else
-    log "Skipping initialization; use --init after source/config/feed changes"
+    log "Skipping initialization; using existing build environment"
     ensure_existing_source
   fi
 
