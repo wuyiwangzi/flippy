@@ -63,16 +63,39 @@ parse_args() {
 }
 
 install_dependencies() {
+  local ubuntu_codename
+  local common_packages
+  local version_packages
+
+  ubuntu_codename="$(detect_ubuntu_codename)"
+  common_packages=(
+    ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential
+    bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gettext genisoimage
+    git gperf haveged help2man intltool libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev
+    libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev
+    libreadline-dev libssl-dev libtool llvm lld lrzsz ninja-build p7zip p7zip-full patch
+    python3 python3-pyelftools python3-setuptools python3-distutils-extra qemu-utils rsync
+    scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd
+    zlib1g-dev golang-go
+  )
+
+  case "$ubuntu_codename" in
+    focal)
+      version_packages=(pkg-config)
+      ;;
+    jammy|noble)
+      version_packages=(libnsl-dev pkg-config)
+      ;;
+    *)
+      version_packages=(pkg-config)
+      log "Unknown Ubuntu codename '$ubuntu_codename'; using conservative dependency set"
+      ;;
+  esac
+
   log "Installing build dependencies"
+  log "Detected Ubuntu codename: $ubuntu_codename"
   sudo apt update -y
-  sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-    bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gettext genisoimage git gperf \
-    haveged help2man intltool libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev \
-    libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev \
-    libssl-dev libtool llvm lld lrzsz libnsl-dev ninja-build p7zip p7zip-full patch pkgconf \
-    python3 python3-pyelftools python3-setuptools python3-setuptools-whl python3-distutils-extra \
-    qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim \
-    wget xmlto xxd zlib1g-dev golang-go
+  sudo apt install -y "${common_packages[@]}" "${version_packages[@]}"
 }
 
 check_dependencies() {
@@ -107,6 +130,24 @@ PY
   if [ "$missing" -ne 0 ]; then
     die "Missing required build tools. Install packages first or check apt setup."
   fi
+}
+
+detect_ubuntu_codename() {
+  if [ -r /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    if [ -n "${VERSION_CODENAME:-}" ]; then
+      printf '%s\n' "$VERSION_CODENAME"
+      return
+    fi
+  fi
+
+  if command -v lsb_release >/dev/null 2>&1; then
+    lsb_release -cs
+    return
+  fi
+
+  printf 'unknown\n'
 }
 
 detect_go_bootstrap() {
