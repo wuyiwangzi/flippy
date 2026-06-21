@@ -62,10 +62,12 @@ parse_args() {
   done
 }
 
-install_dependencies() {
+prepare_build_dependencies() {
   local ubuntu_codename
   local common_packages
   local version_packages
+  local missing=0
+  local cmds=(git make gcc g++ gawk curl rsync unzip bzip2 wget python3 file patch diff find xargs grep gzip realpath stat tar)
 
   ubuntu_codename="$(detect_ubuntu_codename)"
   common_packages=(
@@ -92,15 +94,10 @@ install_dependencies() {
       ;;
   esac
 
-  log "Installing build dependencies"
+  log "Preparing build dependencies"
   log "Detected Ubuntu codename: $ubuntu_codename"
   sudo apt update -y
   sudo apt install -y "${common_packages[@]}" "${version_packages[@]}"
-}
-
-check_dependencies() {
-  local missing=0
-  local cmds=(git make gcc g++ gawk curl rsync unzip bzip2 wget python3 file patch diff find xargs grep gzip realpath stat tar)
 
   for cmd in "${cmds[@]}"; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -108,24 +105,6 @@ check_dependencies() {
       missing=1
     fi
   done
-
-  if ! printf '#include <ncurses.h>\nint main(void){return 0;}\n' | gcc -x c - -o /tmp/opencode/ncurses-check >/dev/null 2>&1; then
-    printf 'Missing required development header: ncurses.h\n' >&2
-    missing=1
-  else
-    rm -f /tmp/opencode/ncurses-check
-  fi
-
-  if ! python3 - <<'PY' >/dev/null 2>&1
-try:
-    from distutils import util
-except Exception:
-    from setuptools._distutils import util  # noqa: F401
-PY
-  then
-    printf 'Missing required Python distutils support\n' >&2
-    missing=1
-  fi
 
   if [ "$missing" -ne 0 ]; then
     die "Missing required build tools. Install packages first or check apt setup."
@@ -281,11 +260,19 @@ compile_firmware() {
 }
 
 show_outputs() {
+  local matches
+
   log "Build outputs"
   cd "$OPENWRT_DIR"
   if [ -d bin/targets ]; then
-    # shellcheck disable=SC2086
-    find bin/targets -maxdepth 4 -type f $SHOW_OUTPUTS_PATTERN
+    # SHOW_OUTPUTS_PATTERN is defined by the per-target wrapper script.
+    matches="$(eval "find bin/targets -maxdepth 4 -type f ${SHOW_OUTPUTS_PATTERN}")"
+    if [ -n "$matches" ]; then
+      printf '%s\n' "$matches"
+    else
+      log "No files matched SHOW_OUTPUTS_PATTERN; listing generated target files instead"
+      find bin/targets -maxdepth 4 -type f ! -path '*/packages/*' | sort
+    fi
   else
     log "No bin/targets directory found"
   fi
@@ -305,8 +292,7 @@ run_local_build() {
 
   if [ "$FORCE_INIT" -eq 1 ] || [ ! -d "$OPENWRT_DIR" ] || [ ! -f "$OPENWRT_DIR/Makefile" ]; then
     log "Initializing OpenWrt build environment"
-    install_dependencies
-    check_dependencies
+    prepare_build_dependencies
     clone_or_update_source
     reset_diy_touched_files
     load_custom_feeds

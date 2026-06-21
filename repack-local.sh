@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Local repack script for Phicomm N1.
-# Mirrors `.github/workflows/n1.yml` by invoking ophub/flippy-openwrt-actions
-# locally with a single target device: `s905d`.
+# Local repack script for flippy-openwrt-actions targets.
+# Mirrors the GitHub Actions packaging flow by invoking
+# ophub/flippy-openwrt-actions locally with a configurable `PACKAGE_SOC`
+# value (default: `s905d`).
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ACTION_DIR="${ACTION_DIR:-$SCRIPT_DIR/flippy-openwrt-actions}"
@@ -76,7 +77,8 @@ Examples:
   ./repack-local.sh
   ./repack-local.sh --init
   ./repack-local.sh --soc s905d --image /path/to/openwrt-armsr-armv8-generic-rootfs.tar.gz
-  ./repack-local.sh --soc s905d --image https://example.com/rootfs.tar.gz --init
+  ./repack-local.sh --soc r68s
+  ./repack-local.sh --soc r68s --image https://example.com/rootfs.tar.gz --init
 EOF
 }
 
