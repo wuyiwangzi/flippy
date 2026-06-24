@@ -13,7 +13,6 @@ DIY_P2_SH="${DIY_P2_SH:-$SCRIPT_DIR/diy-part2.sh}"
 JOBS="${JOBS:-$(nproc)}"
 DOWNLOAD_JOBS="${DOWNLOAD_JOBS:-8}"
 TZ="${TZ:-Asia/Shanghai}"
-GO_BOOTSTRAP_ROOT="${GO_BOOTSTRAP_ROOT:-}"
 INSTALL_DEPS=1
 FORCE_INIT=0
 
@@ -40,7 +39,6 @@ Environment overrides:
   OPENWRT_DIR      OpenWrt source/build directory, default: $OPENWRT_DIR
   JOBS             Compile jobs, default: nproc
   DOWNLOAD_JOBS    Download jobs, default: 8
-  GO_BOOTSTRAP_ROOT External bootstrap Go root directory
 EOF
 }
 
@@ -63,41 +61,24 @@ parse_args() {
 }
 
 prepare_build_dependencies() {
-  local ubuntu_codename
   local common_packages
-  local version_packages
   local missing=0
   local cmds=(git make gcc g++ gawk curl rsync unzip bzip2 wget python3 file patch diff find xargs grep gzip realpath stat tar)
 
-  ubuntu_codename="$(detect_ubuntu_codename)"
   common_packages=(
     ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential
     bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gettext genisoimage
     git gperf haveged help2man intltool libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev
     libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev
-    libreadline-dev libssl-dev libtool llvm lld lrzsz ninja-build p7zip p7zip-full patch
-    python3 python3-pyelftools python3-setuptools python3-distutils-extra qemu-utils rsync
+    libreadline-dev libnsl-dev libssl-dev libtool llvm lrzsz ninja-build p7zip p7zip-full patch pkgconf
+    python3 python3-pyelftools python3-setuptools qemu-utils rsync
     scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd
-    zlib1g-dev golang-go
+    zlib1g-dev
   )
 
-  case "$ubuntu_codename" in
-    focal)
-      version_packages=(pkg-config)
-      ;;
-    jammy|noble)
-      version_packages=(libnsl-dev pkg-config)
-      ;;
-    *)
-      version_packages=(pkg-config)
-      log "Unknown Ubuntu codename '$ubuntu_codename'; using conservative dependency set"
-      ;;
-  esac
-
   log "Preparing build dependencies"
-  log "Detected Ubuntu codename: $ubuntu_codename"
   sudo apt update -y
-  sudo apt install -y "${common_packages[@]}" "${version_packages[@]}"
+  sudo apt install -y "${common_packages[@]}"
 
   for cmd in "${cmds[@]}"; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -108,43 +89,6 @@ prepare_build_dependencies() {
 
   if [ "$missing" -ne 0 ]; then
     die "Missing required build tools. Install packages first or check apt setup."
-  fi
-}
-
-detect_ubuntu_codename() {
-  if [ -r /etc/os-release ]; then
-    # shellcheck disable=SC1091
-    . /etc/os-release
-    if [ -n "${VERSION_CODENAME:-}" ]; then
-      printf '%s\n' "$VERSION_CODENAME"
-      return
-    fi
-  fi
-
-  if command -v lsb_release >/dev/null 2>&1; then
-    lsb_release -cs
-    return
-  fi
-
-  printf 'unknown\n'
-}
-
-detect_go_bootstrap() {
-  if [ -n "$GO_BOOTSTRAP_ROOT" ]; then
-    return
-  fi
-
-  if command -v go >/dev/null 2>&1; then
-    GO_BOOTSTRAP_ROOT="$(go env GOROOT 2>/dev/null || true)"
-  fi
-
-  if [ -z "$GO_BOOTSTRAP_ROOT" ]; then
-    for candidate in /usr/lib/go /usr/lib/go-*; do
-      if [ -x "$candidate/bin/go" ]; then
-        GO_BOOTSTRAP_ROOT="$candidate"
-        break
-      fi
-    done
   fi
 }
 
@@ -211,37 +155,6 @@ load_custom_config() {
   "$DIY_P2_SH"
 }
 
-apply_local_config_fixes() {
-  log "Applying local-only config fixes"
-  cd "$OPENWRT_DIR"
-
-  case "$(uname -m)" in
-    arm64|aarch64)
-      detect_go_bootstrap
-      if [ -n "$GO_BOOTSTRAP_ROOT" ] && [ -x "$GO_BOOTSTRAP_ROOT/bin/go" ]; then
-        if grep -q '^CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=' .config; then
-          sed -i "s|^CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=.*|CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT=\"$GO_BOOTSTRAP_ROOT\"|" .config
-        else
-          printf 'CONFIG_GOLANG_EXTERNAL_BOOTSTRAP_ROOT="%s"\n' "$GO_BOOTSTRAP_ROOT" >> .config
-        fi
-        log "Using external Go bootstrap: $GO_BOOTSTRAP_ROOT"
-      else
-        log "No external Go bootstrap found; golang/host may fail on arm64 hosts"
-      fi
-
-      # If staging_dir recorded a Homebrew Python without distutils, force OpenWrt to re-detect system Python.
-      if [ -L staging_dir/host/bin/python3 ]; then
-        case "$(readlink staging_dir/host/bin/python3)" in
-          *linuxbrew*|*homebrew*) rm -f staging_dir/host/bin/python3 ;;
-        esac
-      fi
-      ;;
-    *)
-      log "Skipping ARM-specific host fixes on non-ARM host"
-      ;;
-  esac
-}
-
 download_sources() {
   log "Generating config and downloading source archives"
   cd "$OPENWRT_DIR"
@@ -298,7 +211,6 @@ run_local_build() {
     load_custom_feeds
     update_and_install_feeds
     load_custom_config
-    apply_local_config_fixes
     download_sources
   else
     log "Skipping initialization; using existing build environment"
